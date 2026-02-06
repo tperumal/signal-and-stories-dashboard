@@ -73,20 +73,30 @@ export default async function handler(req, res) {
     const housingStarts = parseInt(indicatorData.HOUST?.latest || 0);
 
     // Build prompt for Claude
-    const prompt = `You are a housing market analyst. Based on the following data and recent headlines, write a brief 2-3 sentence summary of the current US housing market. Be direct and insightful - focus on what matters most to someone trying to understand the market right now.
+    const prompt = `You are a sharp housing market analyst who cuts through noise. Write a 2-3 sentence market summary using the specific numbers below.
 
-CURRENT DATA:
-- Median Home Price: $${medianPrice.toLocaleString()} (as of ${indicatorData.MSPUS?.date || 'N/A'})
-- Existing Home Sales: ${existingSales.toFixed(2)} million annual rate (as of ${indicatorData.EXHOSLUSM495S?.date || 'N/A'})
-- 30-Year Mortgage Rate: ${mortgageRate.toFixed(2)}% (as of ${indicatorData.MORTGAGE30US?.date || 'N/A'})
-- Housing Inventory: ${inventory.toFixed(1)} months supply (as of ${indicatorData.MSACSR?.date || 'N/A'})
-- New Home Sales: ${newSales}K annual rate (as of ${indicatorData.HSN1F?.date || 'N/A'})
-- Housing Starts: ${housingStarts}K annual rate (as of ${indicatorData.HOUST?.date || 'N/A'})
+DATA:
+- Median Home Price: $${medianPrice.toLocaleString()}
+- Existing Home Sales: ${existingSales.toFixed(2)} million/year
+- 30-Year Mortgage Rate: ${mortgageRate.toFixed(2)}%
+- Housing Inventory: ${inventory.toFixed(1)} months supply
+- New Home Sales: ${newSales}K/year
+- Housing Starts: ${housingStarts}K/year
 
-RECENT HEADLINES:
-${headlines.length > 0 ? headlines.map(h => `- ${h.title} (${h.source})`).join('\n') : '- No recent housing headlines available'}
+CONTEXT:
+- Under 4 months inventory = seller's market, over 6 = buyer's market
+- Historical average mortgage rate is ~7%
+- Pre-pandemic existing sales were ~5.5 million/year
 
-Write a concise market summary (2-3 sentences). Don't use phrases like "based on the data" - just state your analysis directly. Focus on the key trends and what they mean for buyers and sellers.`;
+HEADLINES:
+${headlines.length > 0 ? headlines.map(h => `- ${h.title}`).join('\n') : '- None available'}
+
+Write a punchy summary that:
+1. Uses specific numbers (e.g., "$419K median price" not "high prices")
+2. Compares to historical norms (e.g., "rates at 6.1% are below the 7% average")
+3. States the bottom line for buyers/sellers in plain terms
+
+No hedging, no "may" or "could" - be direct.`;
 
     // Call Claude API
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
