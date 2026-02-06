@@ -93,6 +93,14 @@
             letter-spacing: 0.025em;
         }
 
+        .card-frequency {
+            font-size: 0.7rem;
+            font-weight: 400;
+            text-transform: lowercase;
+            opacity: 0.7;
+            margin-left: 0.5rem;
+        }
+
         .card-value {
             font-size: 2rem;
             font-weight: 600;
@@ -180,37 +188,37 @@
                 id: 'MSPUS',
                 name: 'Median Home Price',
                 format: 'currency',
-                description: 'Median Sales Price of Houses Sold'
+                frequency: 'Quarterly'
             },
             {
                 id: 'EXHOSLUSM495S',
                 name: 'Existing Home Sales',
                 format: 'unitsToMillions',
-                description: 'Existing Home Sales'
+                frequency: 'Monthly'
             },
             {
                 id: 'MORTGAGE30US',
                 name: '30-Year Mortgage Rate',
                 format: 'percent',
-                description: '30-Year Fixed Rate Mortgage'
+                frequency: 'Weekly'
             },
             {
                 id: 'MSACSR',
                 name: 'Housing Inventory',
                 format: 'months',
-                description: 'Monthly Supply of New Houses'
+                frequency: 'Monthly'
             },
             {
                 id: 'HSN1F',
                 name: 'New Home Sales',
                 format: 'thousands',
-                description: 'New Single Family Houses Sold'
+                frequency: 'Monthly'
             },
             {
                 id: 'HOUST',
                 name: 'Housing Starts',
                 format: 'thousands',
-                description: 'Total Housing Starts'
+                frequency: 'Monthly'
             }
         ];
 
@@ -335,7 +343,7 @@
             card.innerHTML = `
                 <div class="card-header">
                     <div>
-                        <div class="card-title">${indicator.name}</div>
+                        <div class="card-title">${indicator.name} <span class="card-frequency">${indicator.frequency}</span></div>
                         <div class="card-value loading">Loading...</div>
                         <div class="card-trend"></div>
                     </div>
