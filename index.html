@@ -177,6 +177,73 @@
             font-size: 0.875rem;
         }
 
+        .summary-section {
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .summary-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-bottom: 1rem;
+        }
+
+        .summary-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .headlines-title {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-bottom: 0.75rem;
+        }
+
+        .headlines-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .headline-item {
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .headline-item a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .headline-item a:hover {
+            text-decoration: underline;
+        }
+
+        .headline-source {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .summary-loading {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .summary-error {
+            color: var(--down);
+        }
+
         footer {
             margin-top: 3rem;
             padding-top: 2rem;
@@ -213,6 +280,15 @@
             <h1>Signal & Stories — Housing</h1>
             <p class="tagline">What the data actually says</p>
         </header>
+
+        <div class="summary-section" id="summary-section">
+            <div class="summary-title">Market Summary</div>
+            <div class="summary-text summary-loading" id="summary-text">Analyzing market data and news...</div>
+            <div class="headlines-title">Recent Headlines</div>
+            <div class="headlines-list" id="headlines-list">
+                <div class="summary-loading">Loading headlines...</div>
+            </div>
+        </div>
 
         <div class="grid" id="dashboard">
             <!-- Cards will be inserted here by JavaScript -->
@@ -445,6 +521,34 @@
             }
         }
 
+        async function loadSummary() {
+            const summaryText = document.getElementById('summary-text');
+            const headlinesList = document.getElementById('headlines-list');
+
+            try {
+                const response = await fetch('/api/summary');
+                if (!response.ok) throw new Error('Failed to load summary');
+
+                const data = await response.json();
+
+                summaryText.textContent = data.summary;
+                summaryText.classList.remove('summary-loading');
+
+                headlinesList.innerHTML = data.headlines.map(h => `
+                    <div class="headline-item">
+                        <a href="${h.url}" target="_blank">${h.title}</a>
+                        <span class="headline-source">${h.source}</span>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                summaryText.textContent = 'Unable to load market summary';
+                summaryText.classList.remove('summary-loading');
+                summaryText.classList.add('summary-error');
+                headlinesList.innerHTML = '<div class="summary-error">Unable to load headlines</div>';
+            }
+        }
+
         async function init() {
             const dashboard = document.getElementById('dashboard');
 
@@ -453,6 +557,9 @@
                 dashboard.appendChild(card);
                 loadIndicator(indicator, card);
             }
+
+            // Load summary after indicators start loading
+            loadSummary();
         }
 
         init();
