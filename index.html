@@ -101,6 +101,12 @@
             margin-left: 0.5rem;
         }
 
+        .card-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
         .card-value {
             font-size: 2rem;
             font-weight: 600;
@@ -346,6 +352,7 @@
                         <div class="card-title">${indicator.name} <span class="card-frequency">${indicator.frequency}</span></div>
                         <div class="card-value loading">Loading...</div>
                         <div class="card-trend"></div>
+                        <div class="card-date"></div>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -358,6 +365,7 @@
         async function loadIndicator(indicator, card) {
             const valueEl = card.querySelector('.card-value');
             const trendEl = card.querySelector('.card-trend');
+            const dateEl = card.querySelector('.card-date');
             const canvas = card.querySelector('canvas');
 
             try {
@@ -365,14 +373,16 @@
 
                 if (data.length === 0) throw new Error('No data');
 
-                const latestValue = data[data.length - 1].value;
+                const latestObs = data[data.length - 1];
                 const trend = calculateTrend(data);
 
-                valueEl.textContent = formatValue(latestValue, indicator.format);
+                valueEl.textContent = formatValue(latestObs.value, indicator.format);
                 valueEl.classList.remove('loading');
 
                 trendEl.className = `card-trend trend-${trend.direction}`;
                 trendEl.textContent = `${getTrendArrow(trend.direction)} ${Math.abs(trend.change).toFixed(1)}% from ${trend.previousDate}`;
+
+                dateEl.textContent = `As of ${formatDate(latestObs.date)}`;
 
                 createChart(canvas, data, indicator.format);
             } catch (error) {
