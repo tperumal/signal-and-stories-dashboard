@@ -222,7 +222,7 @@
                 case 'percent':
                     return num.toFixed(2) + '%';
                 case 'millions':
-                    return num.toFixed(2) + 'M';
+                    return num.toFixed(2) + ' million';
                 case 'months':
                     return num.toFixed(1) + ' mo';
                 case 'thousands':
@@ -232,16 +232,30 @@
             }
         }
 
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        }
+
         function calculateTrend(data) {
-            if (data.length < 2) return { direction: 'flat', change: 0 };
-            const current = parseFloat(data[data.length - 1].value);
-            const previous = parseFloat(data[data.length - 2].value);
+            if (data.length < 2) return { direction: 'flat', change: 0, currentDate: '', previousDate: '' };
+            const currentObs = data[data.length - 1];
+            const previousObs = data[data.length - 2];
+            const current = parseFloat(currentObs.value);
+            const previous = parseFloat(previousObs.value);
             const change = ((current - previous) / previous) * 100;
 
-            if (Math.abs(change) < 0.1) return { direction: 'flat', change: 0 };
+            if (Math.abs(change) < 0.1) return {
+                direction: 'flat',
+                change: 0,
+                currentDate: formatDate(currentObs.date),
+                previousDate: formatDate(previousObs.date)
+            };
             return {
                 direction: change > 0 ? 'up' : 'down',
-                change: change
+                change: change,
+                currentDate: formatDate(currentObs.date),
+                previousDate: formatDate(previousObs.date)
             };
         }
 
@@ -348,7 +362,7 @@
                 valueEl.classList.remove('loading');
 
                 trendEl.className = `card-trend trend-${trend.direction}`;
-                trendEl.textContent = `${getTrendArrow(trend.direction)} ${Math.abs(trend.change).toFixed(1)}% vs prior`;
+                trendEl.textContent = `${getTrendArrow(trend.direction)} ${Math.abs(trend.change).toFixed(1)}% from ${trend.previousDate}`;
 
                 createChart(canvas, data, indicator.format);
             } catch (error) {
