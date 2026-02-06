@@ -107,6 +107,43 @@
             margin-top: 0.25rem;
         }
 
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 0.25rem;
+        }
+
+        .card-title-wrapper {
+            position: relative;
+            cursor: help;
+        }
+
+        .card-tooltip {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text);
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+            line-height: 1.5;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 280px;
+        }
+
+        .card-title-wrapper:hover .card-tooltip {
+            display: block;
+        }
+
         .card-value {
             font-size: 2rem;
             font-weight: 600;
@@ -194,37 +231,49 @@
                 id: 'MSPUS',
                 name: 'Median Home Price',
                 format: 'currency',
-                frequency: 'Quarterly'
+                frequency: 'Quarterly',
+                subtitle: 'Half of homes sell above, half below',
+                tooltip: 'The median sales price of houses sold in the US. Unlike average price, median isn\'t skewed by luxury homes — it shows what a typical buyer actually pays.'
             },
             {
                 id: 'EXHOSLUSM495S',
                 name: 'Existing Home Sales',
                 format: 'unitsToMillions',
-                frequency: 'Monthly'
+                frequency: 'Monthly',
+                subtitle: 'Previously owned homes sold',
+                tooltip: 'Annual rate of existing (not new) home sales. This is the bulk of the market — about 85% of all home sales. Rising sales = more market activity.'
             },
             {
                 id: 'MORTGAGE30US',
                 name: '30-Year Mortgage Rate',
                 format: 'percent',
-                frequency: 'Weekly'
+                frequency: 'Weekly',
+                subtitle: 'Average rate for new loans',
+                tooltip: 'The average interest rate for a 30-year fixed mortgage. This directly affects monthly payments and buying power. A 1% rate increase can reduce buying power by ~10%.'
             },
             {
                 id: 'MSACSR',
                 name: 'Housing Inventory',
                 format: 'months',
-                frequency: 'Monthly'
+                frequency: 'Monthly',
+                subtitle: 'Months to sell all current homes',
+                tooltip: 'How many months it would take to sell all homes on the market at the current sales pace. Under 4 months = seller\'s market, over 6 months = buyer\'s market.'
             },
             {
                 id: 'HSN1F',
                 name: 'New Home Sales',
                 format: 'thousands',
-                frequency: 'Monthly'
+                frequency: 'Monthly',
+                subtitle: 'Newly built homes sold',
+                tooltip: 'Annual rate of new single-family home sales. A leading indicator of housing demand and construction activity. New homes are about 15% of the market.'
             },
             {
                 id: 'HOUST',
                 name: 'Housing Starts',
                 format: 'thousands',
-                frequency: 'Monthly'
+                frequency: 'Monthly',
+                subtitle: 'New construction begun',
+                tooltip: 'Annual rate of new housing units where construction has started. A leading economic indicator — builders start construction when they\'re confident about future demand.'
             }
         ];
 
@@ -349,7 +398,11 @@
             card.innerHTML = `
                 <div class="card-header">
                     <div>
-                        <div class="card-title">${indicator.name} <span class="card-frequency">${indicator.frequency}</span></div>
+                        <div class="card-title-wrapper">
+                            <div class="card-title">${indicator.name} <span class="card-frequency">${indicator.frequency}</span></div>
+                            <div class="card-tooltip">${indicator.tooltip}</div>
+                        </div>
+                        <div class="card-subtitle">${indicator.subtitle}</div>
                         <div class="card-value loading">Loading...</div>
                         <div class="card-trend"></div>
                         <div class="card-date"></div>
