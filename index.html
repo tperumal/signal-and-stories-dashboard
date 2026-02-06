@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal & Stories — Housing</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #fafafa;
+            --bg-card: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #666;
+            --border: #e5e5e5;
+            --up: #16a34a;
+            --down: #dc2626;
+            --flat: #666;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0a0a0a;
+                --bg-card: #141414;
+                --text: #fafafa;
+                --text-muted: #999;
+                --border: #2a2a2a;
+                --up: #22c55e;
+                --down: #ef4444;
+                --flat: #999;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        .card-trend {
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .trend-up { color: var(--up); }
+        .trend-down { color: var(--down); }
+        .trend-flat { color: var(--flat); }
+
+        .chart-container {
+            height: 120px;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .error {
+            color: var(--down);
+            font-size: 0.875rem;
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: underline;
+        }
+
+        footer a:hover {
+            color: var(--text);
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .card-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Signal & Stories — Housing</h1>
+            <p class="tagline">What the data actually says</p>
+        </header>
+
+        <div class="grid" id="dashboard">
+            <!-- Cards will be inserted here by JavaScript -->
+        </div>
+
+        <footer>
+            <p>Data from <a href="https://fred.stlouisfed.org/" target="_blank">FRED</a> (Federal Reserve Bank of St. Louis). Updated as new data is released.</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = '/api/fred';
+
+        const indicators = [
+            {
+                id: 'MSPUS',
+                name: 'Median Home Price',
+                format: 'currency',
+                description: 'Median Sales Price of Houses Sold'
+            },
+            {
+                id: 'EXHOSLUSM495S',
+                name: 'Existing Home Sales',
+                format: 'millions',
+                description: 'Existing Home Sales (Millions)'
+            },
+            {
+                id: 'MORTGAGE30US',
+                name: '30-Year Mortgage Rate',
+                format: 'percent',
+                description: '30-Year Fixed Rate Mortgage'
+            },
+            {
+                id: 'MSACSR',
+                name: 'Housing Inventory',
+                format: 'months',
+                description: 'Monthly Supply of New Houses'
+            },
+            {
+                id: 'HSN1F',
+                name: 'New Home Sales',
+                format: 'thousands',
+                description: 'New Single Family Houses Sold'
+            },
+            {
+                id: 'HOUST',
+                name: 'Housing Starts',
+                format: 'thousands',
+                description: 'Total Housing Starts'
+            }
+        ];
+
+        function formatValue(value, format) {
+            const num = parseFloat(value);
+            switch (format) {
+                case 'currency':
+                    return '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                case 'percent':
+                    return num.toFixed(2) + '%';
+                case 'millions':
+                    return num.toFixed(2) + 'M';
+                case 'months':
+                    return num.toFixed(1) + ' mo';
+                case 'thousands':
+                    return num.toLocaleString('en-US', { maximumFractionDigits: 0 }) + 'K';
+                default:
+                    return num.toLocaleString('en-US');
+            }
+        }
+
+        function calculateTrend(data) {
+            if (data.length < 2) return { direction: 'flat', change: 0 };
+            const current = parseFloat(data[data.length - 1].value);
+            const previous = parseFloat(data[data.length - 2].value);
+            const change = ((current - previous) / previous) * 100;
+
+            if (Math.abs(change) < 0.1) return { direction: 'flat', change: 0 };
+            return {
+                direction: change > 0 ? 'up' : 'down',
+                change: change
+            };
+        }
+
+        function getTrendArrow(direction) {
+            switch (direction) {
+                case 'up': return '↑';
+                case 'down': return '↓';
+                default: return '→';
+            }
+        }
+
+        async function fetchFredData(seriesId) {
+            const twoYearsAgo = new Date();
+            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+            const startDate = twoYearsAgo.toISOString().split('T')[0];
+
+            const url = `${API_BASE}?series_id=${seriesId}&observation_start=${startDate}`;
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            return data.observations.filter(obs => obs.value !== '.');
+        }
+
+        function createChart(canvas, data, format) {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+            const lineColor = isDark ? '#60a5fa' : '#2563eb';
+
+            const labels = data.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+            });
+            const values = data.map(d => parseFloat(d.value));
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        borderColor: lineColor,
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        function createCard(indicator) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">${indicator.name}</div>
+                        <div class="card-value loading">Loading...</div>
+                        <div class="card-trend"></div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-${indicator.id}"></canvas>
+                </div>
+            `;
+            return card;
+        }
+
+        async function loadIndicator(indicator, card) {
+            const valueEl = card.querySelector('.card-value');
+            const trendEl = card.querySelector('.card-trend');
+            const canvas = card.querySelector('canvas');
+
+            try {
+                const data = await fetchFredData(indicator.id);
+
+                if (data.length === 0) throw new Error('No data');
+
+                const latestValue = data[data.length - 1].value;
+                const trend = calculateTrend(data);
+
+                valueEl.textContent = formatValue(latestValue, indicator.format);
+                valueEl.classList.remove('loading');
+
+                trendEl.className = `card-trend trend-${trend.direction}`;
+                trendEl.textContent = `${getTrendArrow(trend.direction)} ${Math.abs(trend.change).toFixed(1)}% vs prior`;
+
+                createChart(canvas, data, indicator.format);
+            } catch (error) {
+                valueEl.textContent = 'Error loading data';
+                valueEl.classList.remove('loading');
+                valueEl.classList.add('error');
+            }
+        }
+
+        async function init() {
+            const dashboard = document.getElementById('dashboard');
+
+            for (const indicator of indicators) {
+                const card = createCard(indicator);
+                dashboard.appendChild(card);
+                loadIndicator(indicator, card);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
