@@ -185,7 +185,7 @@
             {
                 id: 'EXHOSLUSM495S',
                 name: 'Existing Home Sales',
-                format: 'thousandsToMillions',
+                format: 'unitsToMillions',
                 description: 'Existing Home Sales'
             },
             {
@@ -223,8 +223,8 @@
                     return num.toFixed(2) + '%';
                 case 'millions':
                     return num.toFixed(2) + ' million';
-                case 'thousandsToMillions':
-                    return (num / 1000).toFixed(2) + ' million';
+                case 'unitsToMillions':
+                    return (num / 1000000).toFixed(2) + ' million';
                 case 'months':
                     return num.toFixed(1) + ' mo';
                 case 'thousands':
