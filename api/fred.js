@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.FRED_API_KEY;
 
   if (!API_KEY) {
-    return res.status(500).json({ error: 'FRED API key not configured' });
+    return res.status(500).json({ error: 'FRED API key not configured', hasKey: !!API_KEY });
   }
 
   const params = new URLSearchParams({
@@ -28,7 +28,8 @@ export default async function handler(req, res) {
     const response = await fetch(url);
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: 'FRED API error' });
+      const text = await response.text();
+      return res.status(response.status).json({ error: 'FRED API error', status: response.status, details: text });
     }
 
     const data = await response.json();
