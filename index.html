@@ -754,23 +754,40 @@
             new Chart(canvas, {
                 type: 'line',
                 data: {
-                    labels: history.map(d => d.date),
+                    labels: history.map(d => {
+                        const date = new Date(d.date);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }),
                     datasets: [{
                         data: history.map(d => d.close),
                         borderColor: lineColor,
                         backgroundColor: 'transparent',
                         borderWidth: 1.5,
                         pointRadius: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: lineColor,
                         tension: 0.3
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => items[0].label,
+                                label: (item) => '$' + item.raw.toFixed(2)
+                            }
+                        }
+                    },
                     scales: {
                         x: { display: false },
                         y: { display: false }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
                     }
                 }
             });
@@ -789,7 +806,11 @@
 
                 const sign = data.changePercent >= 0 ? '+' : '';
                 const arrow = data.changePercent >= 0 ? '↑' : '↓';
-                changeEl.textContent = `${arrow} ${sign}${data.changePercent.toFixed(2)}%`;
+                const prevDate = data.history && data.history.length >= 2
+                    ? new Date(data.history[data.history.length - 2].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    : '';
+                const vsLabel = prevDate ? ` vs ${prevDate}` : '';
+                changeEl.textContent = `${arrow} ${sign}${data.changePercent.toFixed(2)}%${vsLabel}`;
                 changeEl.className = `stock-change ${data.changePercent >= 0 ? 'trend-up' : 'trend-down'}`;
 
                 if (data.history && data.history.length > 1) {
