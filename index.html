@@ -244,6 +244,81 @@
             color: var(--down);
         }
 
+        .market-watch {
+            margin-top: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stock-group {
+            margin-bottom: 2rem;
+        }
+
+        .stock-group-title {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .stock-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+        }
+
+        .stock-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.25rem;
+        }
+
+        .stock-ticker {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .stock-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stock-price {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .stock-change {
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .stock-chart-container {
+            height: 60px;
+            margin-top: 0.5rem;
+        }
+
         footer {
             margin-top: 3rem;
             padding-top: 2rem;
@@ -294,8 +369,13 @@
             <!-- Cards will be inserted here by JavaScript -->
         </div>
 
+        <div class="market-watch" id="market-watch">
+            <h2 class="section-title">Market Watch</h2>
+            <p class="section-subtitle">Housing-related stocks & ETFs</p>
+        </div>
+
         <footer>
-            <p>Data from <a href="https://fred.stlouisfed.org/" target="_blank">FRED</a> (Federal Reserve Bank of St. Louis). Updated as new data is released.</p>
+            <p>Data from <a href="https://fred.stlouisfed.org/" target="_blank">FRED</a> (Federal Reserve Bank of St. Louis) and <a href="https://www.alphavantage.co/" target="_blank">Alpha Vantage</a>. Updated as new data is released.</p>
         </footer>
     </div>
 
@@ -549,6 +629,180 @@
             }
         }
 
+        // Stock Market Watch
+        const STOCK_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+        const STOCK_REQUEST_DELAY = 1500; // 1.5s between API calls
+
+        const stockGroups = [
+            { name: 'Homebuilders', tickers: [
+                { symbol: 'DHI', name: 'D.R. Horton' },
+                { symbol: 'LEN', name: 'Lennar' },
+                { symbol: 'PHM', name: 'PulteGroup' }
+            ]},
+            { name: 'Mortgage & Lending', tickers: [
+                { symbol: 'RKT', name: 'Rocket Companies' },
+                { symbol: 'UWMC', name: 'UWM Holdings' }
+            ]},
+            { name: 'REITs & ETFs', tickers: [
+                { symbol: 'INVH', name: 'Invitation Homes' },
+                { symbol: 'VNQ', name: 'Vanguard Real Estate ETF' },
+                { symbol: 'ITB', name: 'iShares Home Construction ETF' }
+            ]}
+        ];
+
+        function getStockCache(symbol) {
+            try {
+                const raw = localStorage.getItem(`stock_${symbol}`);
+                if (!raw) return null;
+                const cached = JSON.parse(raw);
+                if (Date.now() - cached.timestamp > STOCK_CACHE_TTL) return null;
+                return cached.data;
+            } catch {
+                return null;
+            }
+        }
+
+        function setStockCache(symbol, data) {
+            try {
+                localStorage.setItem(`stock_${symbol}`, JSON.stringify({
+                    timestamp: Date.now(),
+                    data
+                }));
+            } catch {
+                // localStorage full or unavailable
+            }
+        }
+
+        async function fetchStockData(symbol) {
+            const cached = getStockCache(symbol);
+            if (cached) return cached;
+
+            const response = await fetch(`/api/stocks?symbol=${symbol}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            setStockCache(symbol, data);
+            return data;
+        }
+
+        function createStockCard(ticker) {
+            const card = document.createElement('div');
+            card.className = 'stock-card';
+            card.innerHTML = `
+                <div class="stock-card-header">
+                    <div>
+                        <div class="stock-ticker">${ticker.symbol}</div>
+                        <div class="stock-name">${ticker.name}</div>
+                    </div>
+                    <div style="text-align: right">
+                        <div class="stock-price loading">—</div>
+                        <div class="stock-change"></div>
+                    </div>
+                </div>
+                <div class="stock-chart-container">
+                    <canvas id="stock-chart-${ticker.symbol}"></canvas>
+                </div>
+            `;
+            return card;
+        }
+
+        function createStockChart(canvas, history) {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const first = history[0].close;
+            const last = history[history.length - 1].close;
+            const lineColor = last >= first
+                ? (isDark ? '#22c55e' : '#16a34a')
+                : (isDark ? '#ef4444' : '#dc2626');
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: history.map(d => d.date),
+                    datasets: [{
+                        data: history.map(d => d.close),
+                        borderColor: lineColor,
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+
+        async function loadStockData(ticker, card) {
+            const priceEl = card.querySelector('.stock-price');
+            const changeEl = card.querySelector('.stock-change');
+            const canvas = card.querySelector('canvas');
+
+            try {
+                const data = await fetchStockData(ticker.symbol);
+
+                priceEl.textContent = '$' + data.price.toFixed(2);
+                priceEl.classList.remove('loading');
+
+                const sign = data.changePercent >= 0 ? '+' : '';
+                const arrow = data.changePercent >= 0 ? '↑' : '↓';
+                changeEl.textContent = `${arrow} ${sign}${data.changePercent.toFixed(2)}%`;
+                changeEl.className = `stock-change ${data.changePercent >= 0 ? 'trend-up' : 'trend-down'}`;
+
+                if (data.history && data.history.length > 1) {
+                    createStockChart(canvas, data.history);
+                }
+            } catch {
+                priceEl.textContent = '—';
+                priceEl.classList.remove('loading');
+                changeEl.textContent = 'unavailable';
+                changeEl.className = 'stock-change';
+                changeEl.style.color = 'var(--text-muted)';
+            }
+        }
+
+        async function loadMarketWatch() {
+            const container = document.getElementById('market-watch');
+            const allTickers = [];
+
+            for (const group of stockGroups) {
+                const groupEl = document.createElement('div');
+                groupEl.className = 'stock-group';
+                groupEl.innerHTML = `<div class="stock-group-title">${group.name}</div>`;
+
+                const grid = document.createElement('div');
+                grid.className = 'stock-grid';
+
+                for (const ticker of group.tickers) {
+                    const card = createStockCard(ticker);
+                    grid.appendChild(card);
+                    allTickers.push({ ticker, card });
+                }
+
+                groupEl.appendChild(grid);
+                container.appendChild(groupEl);
+            }
+
+            // Stagger API calls to respect rate limits
+            for (let i = 0; i < allTickers.length; i++) {
+                const { ticker, card } = allTickers[i];
+                // If cached, no need to delay
+                const cached = getStockCache(ticker.symbol);
+                if (cached) {
+                    loadStockData(ticker, card);
+                } else {
+                    if (i > 0) await new Promise(r => setTimeout(r, STOCK_REQUEST_DELAY));
+                    loadStockData(ticker, card);
+                }
+            }
+        }
+
         async function init() {
             const dashboard = document.getElementById('dashboard');
 
@@ -560,6 +814,9 @@
 
             // Load summary after indicators start loading
             loadSummary();
+
+            // Load stock market watch
+            loadMarketWatch();
         }
 
         init();
