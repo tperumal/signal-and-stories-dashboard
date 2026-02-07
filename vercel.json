@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/fred", "destination": "/api/fred" },
-    { "source": "/api/stocks", "destination": "/api/stocks" }
+    { "source": "/api/stocks", "destination": "/api/stocks" },
+    { "source": "/api/stock-commentary", "destination": "/api/stock-commentary" }
   ]
 }

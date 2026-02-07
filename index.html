@@ -244,6 +244,20 @@
             color: var(--down);
         }
 
+        .commentary-section {
+            margin-top: 3rem;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .commentary-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
         .market-watch {
             margin-top: 3rem;
         }
@@ -367,6 +381,11 @@
 
         <div class="grid" id="dashboard">
             <!-- Cards will be inserted here by JavaScript -->
+        </div>
+
+        <div class="commentary-section" id="stock-commentary">
+            <div class="summary-title">Stock Market Commentary</div>
+            <div class="commentary-text summary-loading" id="commentary-text">Analyzing market impact on housing stocks...</div>
         </div>
 
         <div class="market-watch" id="market-watch">
@@ -629,6 +648,24 @@
             }
         }
 
+        async function loadStockCommentary() {
+            const commentaryText = document.getElementById('commentary-text');
+
+            try {
+                const response = await fetch('/api/stock-commentary');
+                if (!response.ok) throw new Error('Failed to load commentary');
+
+                const data = await response.json();
+
+                commentaryText.textContent = data.commentary;
+                commentaryText.classList.remove('summary-loading');
+            } catch (error) {
+                commentaryText.textContent = 'Unable to load stock commentary';
+                commentaryText.classList.remove('summary-loading');
+                commentaryText.classList.add('summary-error');
+            }
+        }
+
         // Stock Market Watch
         const STOCK_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
         const STOCK_REQUEST_DELAY = 1500; // 1.5s between API calls
@@ -815,7 +852,8 @@
             // Load summary after indicators start loading
             loadSummary();
 
-            // Load stock market watch
+            // Load stock commentary and market watch
+            loadStockCommentary();
             loadMarketWatch();
         }
 
