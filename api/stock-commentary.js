@@ -20,24 +20,25 @@ export default async function handler(req, res) {
 
     const indicatorData = {};
 
-    for (const ind of indicators) {
-      try {
-        const fredUrl = `https://api.stlouisfed.org/fred/series/observations?series_id=${ind.id}&api_key=${FRED_API_KEY}&file_type=json&observation_start=2024-01-01&sort_order=asc`;
-        const fredResponse = await fetch(fredUrl);
-        const data = await fredResponse.json();
+    const fredResults = await Promise.allSettled(indicators.map(async (ind) => {
+      const fredUrl = `https://api.stlouisfed.org/fred/series/observations?series_id=${ind.id}&api_key=${FRED_API_KEY}&file_type=json&observation_start=2024-01-01&sort_order=asc`;
+      const fredResponse = await fetch(fredUrl);
+      const data = await fredResponse.json();
+      return { ind, data };
+    }));
 
-        if (data.observations && data.observations.length > 0) {
-          const obs = data.observations.filter(o => o.value !== '.');
-          const latest = obs[obs.length - 1];
-          const previous = obs[obs.length - 2];
-          indicatorData[ind.id] = {
-            latest: latest?.value,
-            previous: previous?.value,
-            date: latest?.date
-          };
-        }
-      } catch (e) {
-        // Skip failed indicators
+    for (const result of fredResults) {
+      if (result.status === 'rejected') continue;
+      const { ind, data } = result.value;
+      if (data.observations && data.observations.length > 0) {
+        const obs = data.observations.filter(o => o.value !== '.');
+        const latest = obs[obs.length - 1];
+        const previous = obs[obs.length - 2];
+        indicatorData[ind.id] = {
+          latest: latest?.value,
+          previous: previous?.value,
+          date: latest?.date
+        };
       }
     }
 
@@ -50,7 +51,9 @@ export default async function handler(req, res) {
 
     const stockData = {};
 
-    for (const ticker of tickers) {
+    for (let i = 0; i < tickers.length; i++) {
+      const ticker = tickers[i];
+      if (i > 0) await new Promise(r => setTimeout(r, 1500));
       try {
         const params = new URLSearchParams({
           function: 'TIME_SERIES_DAILY',
