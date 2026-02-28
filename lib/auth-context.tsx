@@ -12,7 +12,7 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
-import { getFirebaseAuth } from "./firebase";
+import { getFirebaseAuth, isFirebaseConfigured } from "./firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -33,12 +33,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(getFirebaseAuth(), async (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
 
       if (firebaseUser) {
-        // Set auth cookie for middleware
         const token = await firebaseUser.getIdToken();
         document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax`;
       } else {
@@ -50,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    if (!isFirebaseConfigured) return;
     await firebaseSignOut(getFirebaseAuth());
     document.cookie = "auth-token=; path=/; max-age=0";
   };

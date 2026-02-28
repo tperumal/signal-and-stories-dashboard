@@ -10,10 +10,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+export const isFirebaseConfigured = !!firebaseConfig.apiKey;
+
 let _app: FirebaseApp | undefined;
 let _auth: Auth | undefined;
 
 function getFirebaseApp(): FirebaseApp {
+  if (!isFirebaseConfigured) {
+    throw new Error("Firebase is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars.");
+  }
   if (_app) return _app;
   _app =
     getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];

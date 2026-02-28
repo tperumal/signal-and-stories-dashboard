@@ -21,6 +21,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip auth check if Firebase is not configured
+  if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+    return NextResponse.next();
+  }
+
   // Check for auth cookie
   const token = request.cookies.get("auth-token")?.value;
   if (!token) {
