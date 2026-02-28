@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const series_id = searchParams.get("series_id");
   const observation_start = searchParams.get("observation_start");
+  const units = searchParams.get("units");
 
   if (!series_id) {
     return NextResponse.json(
@@ -35,6 +36,10 @@ export async function GET(request: NextRequest) {
 
   if (observation_start) {
     params.append("observation_start", observation_start);
+  }
+
+  if (units) {
+    params.append("units", units);
   }
 
   const url = `https://api.stlouisfed.org/fred/series/observations?${params}`;

@@ -7,6 +7,9 @@ import { UserMenu } from "./user-menu";
 const navLinks = [
   { href: "/housing", label: "Housing" },
   { href: "/labor", label: "Labor" },
+  { href: "/inflation", label: "Inflation" },
+  { href: "/gdp", label: "GDP" },
+  { href: "/consumer", label: "Consumer" },
 ];
 
 export function DashboardNav() {

@@ -15,6 +15,10 @@ export function formatValue(value: string | number, format: FormatType): string 
       return num.toFixed(1) + " mo";
     case "thousands":
       return num.toLocaleString("en-US", { maximumFractionDigits: 0 }) + "K";
+    case "index":
+      return num.toFixed(1);
+    case "billions":
+      return (num / 1000).toFixed(1) + "B";
     default:
       return num.toLocaleString("en-US");
   }

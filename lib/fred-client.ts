@@ -6,7 +6,8 @@ export interface FredObservation {
 export async function fetchFredSeries(
   seriesId: string,
   apiKey: string,
-  observationStart?: string
+  observationStart?: string,
+  units?: string
 ): Promise<FredObservation[]> {
   const params = new URLSearchParams({
     series_id: seriesId,
@@ -17,6 +18,10 @@ export async function fetchFredSeries(
 
   if (observationStart) {
     params.append("observation_start", observationStart);
+  }
+
+  if (units) {
+    params.append("units", units);
   }
 
   const url = `https://api.stlouisfed.org/fred/series/observations?${params}`;
@@ -39,7 +44,7 @@ export interface IndicatorSummaryData {
 }
 
 export async function fetchIndicatorSummaries(
-  indicators: { id: string; name: string }[],
+  indicators: { id: string; name: string; apiUnits?: string }[],
   apiKey: string,
   observationStart: string
 ): Promise<Record<string, IndicatorSummaryData>> {
@@ -47,7 +52,7 @@ export async function fetchIndicatorSummaries(
 
   const results = await Promise.allSettled(
     indicators.map(async (ind) => {
-      const obs = await fetchFredSeries(ind.id, apiKey, observationStart);
+      const obs = await fetchFredSeries(ind.id, apiKey, observationStart, ind.apiUnits);
       return { ind, obs };
     })
   );

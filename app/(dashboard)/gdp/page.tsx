@@ -1,24 +1,24 @@
 import type { Metadata } from "next";
-import { housingIndicators } from "@/lib/indicators";
+import { gdpIndicators } from "@/lib/indicators";
 import { IndicatorCard } from "@/components/ui/indicator-card";
 import { SummarySection } from "@/components/ui/summary-section";
 
 export const metadata: Metadata = {
-  title: "Housing — Signal & Stories",
+  title: "GDP & Growth — Signal & Stories",
 };
 
-export default function HousingPage() {
+export default function GdpPage() {
   return (
     <>
       <header className="dashboard-header">
-        <h1>Housing</h1>
+        <h1>GDP & Growth</h1>
         <p className="tagline">What the data actually says</p>
       </header>
 
-      <SummarySection apiUrl="/api/summary" />
+      <SummarySection apiUrl="/api/gdp-summary" />
 
       <div className="grid">
-        {housingIndicators.map((indicator) => (
+        {gdpIndicators.map((indicator) => (
           <IndicatorCard key={indicator.id} indicator={indicator} />
         ))}
       </div>

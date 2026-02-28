@@ -21,7 +21,8 @@ export function IndicatorCard({ indicator }: { indicator: Indicator }) {
     twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
     const startDate = twoYearsAgo.toISOString().split("T")[0];
 
-    authFetch(`/api/fred?series_id=${indicator.id}&observation_start=${startDate}`)
+    const unitsParam = indicator.apiUnits ? `&units=${indicator.apiUnits}` : "";
+    authFetch(`/api/fred?series_id=${indicator.id}&observation_start=${startDate}${unitsParam}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

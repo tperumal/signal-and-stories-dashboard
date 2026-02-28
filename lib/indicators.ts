@@ -5,6 +5,7 @@ export interface Indicator {
   frequency: string;
   subtitle: string;
   tooltip: string;
+  apiUnits?: string;
 }
 
 export type FormatType =
@@ -13,7 +14,9 @@ export type FormatType =
   | "millions"
   | "unitsToMillions"
   | "months"
-  | "thousands";
+  | "thousands"
+  | "index"
+  | "billions";
 
 export const housingIndicators: Indicator[] = [
   {
@@ -126,5 +129,181 @@ export const laborIndicators: Indicator[] = [
     subtitle: "Working-age adults in labor force",
     tooltip:
       "The percentage of the civilian noninstitutional population that is either employed or actively looking for work. Pre-pandemic was around 63.3%.",
+  },
+];
+
+export const inflationIndicators: Indicator[] = [
+  {
+    id: "CPIAUCSL",
+    name: "CPI Inflation Rate",
+    format: "percent",
+    frequency: "Monthly",
+    subtitle: "Year-over-year consumer price change",
+    tooltip:
+      "The Consumer Price Index measures the average change in prices paid by urban consumers for a basket of goods and services. The most widely cited inflation measure.",
+    apiUnits: "pc1",
+  },
+  {
+    id: "PCEPILFE",
+    name: "Core PCE Inflation",
+    format: "percent",
+    frequency: "Monthly",
+    subtitle: "The Fed's preferred inflation gauge",
+    tooltip:
+      "Personal Consumption Expenditures excluding food and energy. The Federal Reserve targets 2% core PCE inflation. Excludes volatile items to show underlying trend.",
+    apiUnits: "pc1",
+  },
+  {
+    id: "PPIFIS",
+    name: "Producer Price Index",
+    format: "percent",
+    frequency: "Monthly",
+    subtitle: "Year-over-year producer price change",
+    tooltip:
+      "Measures the average change in selling prices received by domestic producers. A leading indicator of consumer inflation — rising producer costs often pass through to consumers.",
+    apiUnits: "pc1",
+  },
+  {
+    id: "T10YIE",
+    name: "10-Yr Breakeven Inflation",
+    format: "percent",
+    frequency: "Daily",
+    subtitle: "Market's inflation expectation",
+    tooltip:
+      "The difference between 10-year Treasury yields and 10-year TIPS yields. Represents what bond markets expect average inflation to be over the next decade.",
+  },
+  {
+    id: "GASREGW",
+    name: "Regular Gas Price",
+    format: "currency",
+    frequency: "Weekly",
+    subtitle: "National average per gallon",
+    tooltip:
+      "The U.S. average retail price of regular unleaded gasoline. A highly visible inflation indicator that directly affects consumer sentiment and spending.",
+  },
+  {
+    id: "CPIUFDSL",
+    name: "Food CPI",
+    format: "percent",
+    frequency: "Monthly",
+    subtitle: "Year-over-year food price change",
+    tooltip:
+      "The Consumer Price Index for food at home. Food prices are among the most visible inflation measures for everyday consumers and a key driver of sentiment.",
+    apiUnits: "pc1",
+  },
+];
+
+export const gdpIndicators: Indicator[] = [
+  {
+    id: "A191RL1Q225SBEA",
+    name: "Real GDP Growth",
+    format: "percent",
+    frequency: "Quarterly",
+    subtitle: "Annualized quarterly growth rate",
+    tooltip:
+      "The annualized rate of change in real gross domestic product. The broadest measure of economic activity. Two consecutive negative quarters is a common recession signal.",
+  },
+  {
+    id: "INDPRO",
+    name: "Industrial Production",
+    format: "percent",
+    frequency: "Monthly",
+    subtitle: "Year-over-year factory output change",
+    tooltip:
+      "Measures the real output of manufacturing, mining, and utilities. A key gauge of the industrial sector's health and a coincident economic indicator.",
+    apiUnits: "pc1",
+  },
+  {
+    id: "DGORDER",
+    name: "Durable Goods Orders",
+    format: "billions",
+    frequency: "Monthly",
+    subtitle: "New orders for long-lasting goods",
+    tooltip:
+      "New orders placed with domestic manufacturers for goods expected to last 3+ years (appliances, cars, machinery). A leading indicator of manufacturing activity and business investment.",
+  },
+  {
+    id: "NAPM",
+    name: "ISM Manufacturing PMI",
+    format: "index",
+    frequency: "Monthly",
+    subtitle: "Above 50 = expansion",
+    tooltip:
+      "The Institute for Supply Management's Purchasing Managers Index. Above 50 signals manufacturing expansion, below 50 signals contraction. One of the most watched leading indicators.",
+  },
+  {
+    id: "PERMIT",
+    name: "Building Permits",
+    format: "thousands",
+    frequency: "Monthly",
+    subtitle: "Authorized new housing units",
+    tooltip:
+      "The number of new privately-owned housing units authorized by building permits. A leading indicator of future construction activity and economic confidence.",
+  },
+  {
+    id: "T10Y2Y",
+    name: "Yield Curve Spread",
+    format: "percent",
+    frequency: "Daily",
+    subtitle: "10-year minus 2-year Treasury",
+    tooltip:
+      "The difference between 10-year and 2-year Treasury yields. When negative (inverted), it has preceded every US recession since 1970. A key recession warning signal.",
+  },
+];
+
+export const consumerIndicators: Indicator[] = [
+  {
+    id: "RSAFS",
+    name: "Retail Sales",
+    format: "millions",
+    frequency: "Monthly",
+    subtitle: "Total monthly retail spending",
+    tooltip:
+      "Total receipts at retail and food service stores. Consumer spending drives about 70% of US GDP, making this a critical measure of economic health.",
+  },
+  {
+    id: "UMCSENT",
+    name: "Consumer Sentiment",
+    format: "index",
+    frequency: "Monthly",
+    subtitle: "University of Michigan survey",
+    tooltip:
+      "The University of Michigan Consumer Sentiment Index measures consumer confidence about the economy. Higher values indicate greater optimism. Baseline of 100 is from 1966.",
+  },
+  {
+    id: "DPCERAM1M225NBEA",
+    name: "Real Consumer Spending",
+    format: "percent",
+    frequency: "Monthly",
+    subtitle: "Inflation-adjusted spending growth",
+    tooltip:
+      "Real personal consumption expenditures growth. Shows actual consumer spending power after accounting for inflation — the most direct measure of consumer demand.",
+  },
+  {
+    id: "REVOLSL",
+    name: "Revolving Credit",
+    format: "millions",
+    frequency: "Monthly",
+    subtitle: "Credit card and other revolving debt",
+    tooltip:
+      "Total revolving consumer credit outstanding (mainly credit cards). Rising levels can signal consumer confidence or financial stress depending on the economic context.",
+  },
+  {
+    id: "PSAVERT",
+    name: "Personal Saving Rate",
+    format: "percent",
+    frequency: "Monthly",
+    subtitle: "Share of income saved",
+    tooltip:
+      "Personal saving as a percentage of disposable personal income. The pre-pandemic average was about 7%. Low rates may signal consumer stress or confidence depending on context.",
+  },
+  {
+    id: "TOTALSA",
+    name: "Auto Sales",
+    format: "millions",
+    frequency: "Monthly",
+    subtitle: "Total vehicle sales annualized",
+    tooltip:
+      "Total light vehicle sales at a seasonally adjusted annual rate. One of the largest consumer purchases — a strong indicator of consumer willingness to make big-ticket commitments.",
   },
 ];
