@@ -4,52 +4,76 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Signal & Stories — Housing is a serverless housing market dashboard. Static HTML frontend + Vercel Serverless Functions backend. No build step, no framework, no bundler.
+Signal & Stories Dashboard — a multi-view market data dashboard built with Next.js. Two views: Housing (6 FRED indicators, 8 stocks, AI summary/commentary) and Labor (6 FRED indicators, AI summary). Firebase Auth protects all routes.
 
 ## Development Commands
 
 ```bash
-# Local development (requires Vercel CLI: npm i -g vercel)
-vercel dev
-
-# Deploy preview
-vercel deploy
-
-# Deploy to production
-vercel deploy --prod
-
-# Test API endpoints locally
-curl "http://localhost:3000/api/fred?series_id=MSPUS"
-curl "http://localhost:3000/api/summary"
+npm run dev       # Local dev server (http://localhost:3000)
+npm run build     # Production build
+npm start         # Start production server
+npm run lint      # Lint with Next.js ESLint
 ```
-
-There is no build, lint, or test command — the project has no build step and no test suite.
 
 ## Architecture
 
-**Frontend:** Single `index.html` file containing all HTML, CSS (with CSS custom properties for dark/light theming), and vanilla JavaScript. Uses Chart.js from CDN for mini sparkline charts.
+**Framework:** Next.js 15 App Router with TypeScript and Tailwind v4.
 
-**Backend:** Two Vercel Serverless Functions in `api/`:
-- `api/fred.js` — Proxy to FRED (Federal Reserve) API. Accepts `series_id` and optional `observation_start` query params. Cached 1 hour.
-- `api/summary.js` — Aggregates data from three external APIs (FRED, NewsAPI, Claude API) to produce an AI-generated market summary with news headlines. Cached 30 minutes.
+**Authentication:** Firebase Auth (Email/Password). Client SDK handles login/signup/reset. Middleware checks `auth-token` cookie for route protection. API routes verify Bearer tokens via Firebase Admin SDK.
 
-**Data flow:** `index.html` makes parallel fetch calls — one per housing indicator to `/api/fred` and one to `/api/summary`. Each indicator card loads independently with its own loading/error state.
+**Frontend structure:**
+- `app/layout.tsx` — Root layout, wraps everything in `AuthProvider`
+- `app/(dashboard)/layout.tsx` — Dashboard shell with nav bar
+- `app/(dashboard)/housing/page.tsx` — Housing indicators view
+- `app/(dashboard)/labor/page.tsx` — Labor indicators view
+- `app/(auth)/` — Login, signup, reset-password pages
+
+**API routes** (all require Bearer token):
+- `app/api/fred/route.ts` — Proxy to FRED API. Params: `series_id`, `observation_start`. Cache: 1h.
+- `app/api/stocks/route.ts` — Proxy to Alpha Vantage. Params: `symbol`. Cache: 15m.
+- `app/api/summary/route.ts` — Housing AI summary (FRED + NewsAPI + Claude). Cache: 30m.
+- `app/api/stock-commentary/route.ts` — Housing stock commentary (FRED + Alpha Vantage + Claude). Cache: 30m.
+- `app/api/labor-summary/route.ts` — Labor AI summary (FRED + NewsAPI + Claude). Cache: 30m.
+
+**Shared libraries:**
+- `lib/indicators.ts` — Housing + labor indicator definitions
+- `lib/stocks.ts` — Stock group definitions
+- `lib/formatters.ts` — `formatValue`, `calculateTrend`, `getTrendArrow`
+- `lib/fred-client.ts` — FRED fetch logic shared across summary routes
+- `lib/claude-client.ts` — Claude API call utility
+- `lib/firebase.ts` — Client SDK (lazy init)
+- `lib/firebase-admin.ts` — Admin SDK (lazy init)
+- `lib/auth-context.tsx` — `AuthProvider` + `useAuth` hook
+- `lib/verify-auth.ts` — Server-side token verification
+- `lib/use-auth-fetch.ts` — Client-side fetch wrapper that adds Bearer token
+
+**Key patterns:**
+- Each indicator card fetches independently with its own loading/error state
+- Stock data cached in localStorage (15m TTL)
+- Staggered stock API requests (1.5s delay) to respect Alpha Vantage rate limits
+- Dark/light mode via CSS custom properties + `prefers-color-scheme`
+- Chart.js sparklines on canvas refs via `useEffect`
 
 ## Housing Indicators (FRED Series IDs)
 
 MSPUS (Median Home Price), EXHOSLUSM495S (Existing Home Sales), MORTGAGE30US (30-Year Mortgage Rate), MSACSR (Housing Inventory), HSN1F (New Home Sales), HOUST (Housing Starts)
 
+## Labor Indicators (FRED Series IDs)
+
+UNRATE (Unemployment Rate), PAYEMS (Nonfarm Payrolls), ICSA (Initial Jobless Claims), JTSJOL (Job Openings JOLTS), CES0500000003 (Avg. Hourly Earnings), CIVPART (Labor Force Participation)
+
 ## Environment Variables
 
-All set via Vercel dashboard (Settings → Environment Variables):
+Set via Vercel dashboard (Settings > Environment Variables) and `.env.local` for dev:
+
+**API keys:**
 - `FRED_API_KEY` — from https://fred.stlouisfed.org/docs/api/
+- `ALPHA_VANTAGE_API_KEY` — from https://www.alphavantage.co/
 - `NEWS_API_KEY` — from https://newsapi.org/
 - `ANTHROPIC_API_KEY` — for Claude API (model: `claude-3-haiku-20240307`)
 
-## Key Patterns
+**Firebase client (public):**
+- `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`
 
-- Serverless handlers export `async function handler(req, res)` with standard Vercel signature
-- Frontend uses vanilla DOM manipulation (`querySelector`, `innerHTML`, `textContent`)
-- External API errors in `summary.js` are handled gracefully — individual FRED indicator failures are skipped
-- CSS theming via custom properties with `@media (prefers-color-scheme: dark)` override
-- Responsive grid layout with `auto-fit` and `minmax(340px, 1fr)`
+**Firebase admin (server-only):**
+- `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`
