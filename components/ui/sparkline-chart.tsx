@@ -25,7 +25,7 @@ export function SparklineChart({
     if (!canvasRef.current || data.length === 0) return;
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const defaultColor = isDark ? "#60a5fa" : "#2563eb";
+    const defaultColor = isDark ? "#ffffff" : "#000000";
     const lineColor = color || defaultColor;
 
     const isStock = variant === "stock";
