@@ -260,9 +260,10 @@ body {
 }
 
 .summary-text {
-  font-size: 1rem;
+  font-size: 0.85rem;
   line-height: 1.7;
   margin-bottom: 1.5rem;
+  font-family: 'Space Mono', 'Courier New', monospace;
 }
 
 .headlines-title {
@@ -284,8 +285,9 @@ body {
 }
 
 .headline-item {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   line-height: 1.4;
+  font-family: 'Space Mono', 'Courier New', monospace;
 }
 
 .headline-item a {
@@ -328,8 +330,9 @@ body {
 }
 
 .commentary-text {
-  font-size: 1rem;
+  font-size: 0.85rem;
   line-height: 1.7;
+  font-family: 'Space Mono', 'Courier New', monospace;
 }
 
 /* Market watch */
